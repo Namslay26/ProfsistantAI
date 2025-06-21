@@ -78,7 +78,7 @@ Profsistant/
 │   └── secrets.toml              # API keys (never commit!)
 └── README.md
 ```
-##💡 Why Use Profsistant?
+## 💡 Why Use Profsistant?
 Academic research is overwhelming — too many papers, too little structure. Profsistant bridges that gap by helping you:
 
 * Stay focused on a goal

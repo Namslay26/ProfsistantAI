@@ -50,3 +50,64 @@
 ```bash
 git clone https://github.com/yourusername/profsistant.git
 cd profsistant
+```
+### 2. Install requirements
+```
+pip install -r requirements.txt
+```
+### 3. Set your API key
+Create a file: .streamlit/secrets.toml
+```
+GEMINI_API_KEY = "your-gemini-api-key-here"
+```
+### 4. Run the app
+```
+streamlit run Home.py
+```
+
+## 📁 Project Structure
+```
+Profsistant/
+├── app.py                       # Search + summarize papers
+├── pages/
+│   ├── 1_ReadingList.py       # Reading list manager
+│   ├── 2_Planner.py           # Planner + calendar export
+│   ├── 3_Dashboard.py         # Stats and filters
+│   └── 4_ResearchIdeas.py    # Gemini gap generator + ideas list
+├── .streamlit/
+│   └── secrets.toml              # API keys (never commit!)
+└── README.md
+```
+##💡 Why Use Profsistant?
+Academic research is overwhelming — too many papers, too little structure. Profsistant bridges that gap by helping you:
+
+* Stay focused on a goal
+
+* Build a reading plan around your schedule
+
+* Discover promising research directions faster
+
+Whether you're starting a term paper, thesis, or capstone, Profsistant can help you take the first confident step.
+
+## 🧪 Roadmap (Coming Soon)
+* 🔍 PDF upload + summarizer
+
+* 🔁 Notion export integration
+
+* 🧠 Topic clustering + similarity view
+
+*👥 Team mode for lab groups
+
+## 🙌 Credits
+Built with ❤️ by @Namslay26
+
+🛡️ License
+MIT License. Feel free to fork and build on it!
+```
+---
+Let me know if you'd like:
+- A `requirements.txt` auto-generated from your code
+- GitHub topics or description text
+- A logo/banner for your project
+```
+Happy pushing to GitHub! 🚀

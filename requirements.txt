@@ -1,0 +1,5 @@
+plotly
+ics
+google-genai
+scholarly
+pytz

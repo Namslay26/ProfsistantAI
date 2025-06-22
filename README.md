@@ -1,5 +1,5 @@
 # 🧠 Profsistant — Your AI Research Kickoff Assistant
-
+![Header](./[ProfsistantAI.png])
 **Profsistant** is an intelligent assistant designed to help academic researchers — especially students — get started on research projects faster and more effectively. It helps you discover relevant papers, organize your reading, generate research gaps and ideas, and build a personalized reading plan.
 
 > 📚 Turn scattered papers into a focused project.  

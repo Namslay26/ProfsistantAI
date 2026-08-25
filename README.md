@@ -104,10 +104,3 @@ Built with ❤️ by @Namslay26
 🛡️ License
 MIT License. Feel free to fork and build on it!
 ```
----
-Let me know if you'd like:
-- A `requirements.txt` auto-generated from your code
-- GitHub topics or description text
-- A logo/banner for your project
-```
-Happy pushing to GitHub! 🚀

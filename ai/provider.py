@@ -89,6 +89,12 @@ def validate_user_key(key):
             return False, "Gemini responded without text. The key may not have access to this model."
         return True, "Gemini API key works."
     except Exception as exc:
+        code = getattr(exc, "code", None)
+        if code in {429, 500, 502, 503, 504}:
+            return True, (
+                "The key was accepted, but Gemini is temporarily busy. "
+                "You can continue and retry generation shortly."
+            )
         return False, f"Gemini rejected the key: {exc}"
     finally:
         if client is not None:

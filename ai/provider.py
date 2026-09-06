@@ -37,8 +37,14 @@ def get_gemini_api_key():
         ) from exc
 
 
+@st.cache_resource(show_spinner=False)
+def _create_gemini_client(api_key):
+    return genai.Client(api_key=api_key)
+
+
 def get_gemini_client():
-    return genai.Client(api_key=get_gemini_api_key())
+    """Return a reusable client whose transport stays open across reruns."""
+    return _create_gemini_client(get_gemini_api_key())
 
 
 def has_user_key():
@@ -55,6 +61,7 @@ def validate_user_key(key):
     if not key:
         return False, "Enter a Gemini API key first."
 
+    client = None
     try:
         client = genai.Client(api_key=key)
         response = client.models.generate_content(
@@ -66,3 +73,6 @@ def validate_user_key(key):
         return True, "Gemini API key works."
     except Exception as exc:
         return False, f"Gemini rejected the key: {exc}"
+    finally:
+        if client is not None:
+            client.close()

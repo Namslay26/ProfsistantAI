@@ -1,545 +1,156 @@
 import streamlit as st
 
 from auth import login, get_user_id
-from database import (
-    get_user_papers,
-    update_paper,
-    delete_paper,
-    add_paper,
-)
+from database import get_user_papers, update_paper, delete_paper, add_paper
+from ui import apply_theme, sidebar, page_header, chips
 
+# Initialize theme and sidebar
+apply_theme()
+sidebar()
 
-# ============================================================
-# CONFIG
-# ============================================================
-
-st.set_page_config(
-    page_title="Reading List",
-    page_icon="📚",
-    layout="wide",
-)
-
-
-# ============================================================
-# AUTH
-# ============================================================
-
+# Check user authentication
 if "user" not in st.session_state:
     login()
     st.stop()
 
+# Get user data
 user_id = get_user_id()
+papers = get_user_papers(user_id)
 
-if not user_id:
-    st.error("Unable to identify the logged-in user.")
-    st.stop()
-
-
-# ============================================================
-# LOAD PAPERS
-# ============================================================
-
-try:
-
-    papers = get_user_papers(user_id)
-
-except Exception as e:
-
-    st.error(
-        "Unable to load your reading list."
-    )
-
-    st.caption(
-        f"Error: {e}"
-    )
-
-    st.stop()
-
-
-# ============================================================
-# PAGE HEADER
-# ============================================================
-
-st.title("📚 Your Research Reading List")
-
-st.markdown(
-    """
-    Papers saved from your research searches are stored
-    permanently in your Supabase reading list.
-    """
+# Page header
+page_header(
+    "LIBRARY",
+    "Your research library",
+    "Keep the papers that matter, annotate them, and move them through your research workflow.",
 )
 
-
-# ============================================================
-# EMPTY STATE
-# ============================================================
-
+# Check if papers exist
 if not papers:
-
-    st.info(
-        "Your reading list is empty. "
-        "Search for papers on the Home page or add one below."
-    )
-
-else:
-
-    st.success(
-        f"You have {len(papers)} paper"
-        f"{'s' if len(papers) != 1 else ''} "
-        "in your reading list."
-    )
-
-
-# ============================================================
-# CONSTANTS
-# ============================================================
-
-statuses = [
-    "To Read",
-    "Reading",
-    "Done",
-]
-
-label_options = [
-    "Survey",
-    "Theoretical",
-    "Empirical",
-    "Review",
-    "Application",
-    "Methodology",
-    "Dataset",
-    "Benchmark",
-]
-
-
-# ============================================================
-# DISPLAY PAPERS
-# ============================================================
-
-for idx, paper in enumerate(papers):
-
-    paper_id = paper["id"]
-
-    st.markdown("---")
-
-    # ========================================================
-    # TITLE
-    # ========================================================
-
-    st.subheader(
-        f"{idx + 1}. {paper.get('title', 'Untitled')}"
-    )
-
-    # ========================================================
-    # METADATA
-    # ========================================================
-
-    authors = paper.get(
-        "authors",
-        "Unknown"
-    ) or "Unknown"
-
-    st.markdown(
-        f"**Authors:** {authors}"
-    )
-
-    metadata = []
-
-    if paper.get("source"):
-        metadata.append(
-            f"📌 **Source:** {paper['source']}"
-        )
-
-    if paper.get("publication_year"):
-        metadata.append(
-            f"📅 **Year:** {paper['publication_year']}"
-        )
-
-    if paper.get("citation_count") is not None:
-        metadata.append(
-            f"📚 **Citations:** "
-            f"{paper.get('citation_count', 0)}"
-        )
-
-    if metadata:
-        st.markdown(
-            "  \n".join(metadata)
-        )
-
-    # ========================================================
-    # OPENALEX ID
-    # ========================================================
-
-    if paper.get("openalex_id"):
-
-        with st.expander("🔎 Paper Metadata"):
-
-            st.code(
-                paper["openalex_id"],
-                language=None
-            )
-
-    # ========================================================
-    # LABELS
-    # ========================================================
-
-    labels = paper.get("labels") or []
-
-    if isinstance(labels, str):
-
-        labels = [
-            label.strip()
-            for label in labels.split(",")
-            if label.strip()
-        ]
-
-    st.markdown(
-        f"🏷️ **Labels:** "
-        f"{', '.join(labels) if labels else 'None'}"
-    )
-
-    # ========================================================
-    # PAPER LINKS
-    # ========================================================
-
-    url = paper.get("url")
-
-    if url and url != "#":
-
-        st.link_button(
-            "🔗 View Paper",
-            url
-        )
-
-    # ========================================================
-    # ABSTRACT
-    # ========================================================
-
-    with st.expander("📄 Abstract"):
-
-        abstract = paper.get(
-            "abstract",
-            ""
-        ) or ""
-
-        if abstract:
-
-            st.write(
-                abstract
-            )
-
-        else:
-
-            st.caption(
-                "No abstract available."
-            )
-
-    # ========================================================
-    # STATUS
-    # ========================================================
-
-    current_status = paper.get(
-        "status",
-        "To Read"
-    )
-
-    if current_status not in statuses:
-        current_status = "To Read"
-
-    status_index = statuses.index(
-        current_status
-    )
-
-    new_status = st.selectbox(
-        "📘 Status",
-        statuses,
-        index=status_index,
-        key=f"status_{paper_id}",
-    )
-
-    if new_status != paper.get("status", "To Read"):
-
-        try:
-
-            update_paper(
-                paper_id,
-                user_id,
-                {
-                    "status": new_status
-                },
-            )
-
-            st.success(
-                "Status updated!"
-            )
-
-            st.rerun()
-
-        except Exception as e:
-
-            st.error(
-                "Unable to update status."
-            )
-
-            st.caption(
-                f"Error: {e}"
-            )
-
-    # ========================================================
-    # LABEL EDITING
-    # ========================================================
-
-    new_labels = st.multiselect(
-        "🏷️ Labels",
-        label_options,
-        default=[
-            label
-            for label in labels
-            if label in label_options
-        ],
-        key=f"labels_{paper_id}",
-    )
-
-    if set(new_labels) != set(labels):
-
-        if st.button(
-            "💾 Save Labels",
-            key=f"save_labels_{paper_id}",
-        ):
-
-            try:
-
-                update_paper(
-                    paper_id,
-                    user_id,
-                    {
-                        "labels": new_labels
-                    },
-                )
-
-                st.success(
-                    "Labels updated!"
-                )
-
-                st.rerun()
-
-            except Exception as e:
-
-                st.error(
-                    "Unable to update labels."
-                )
-
-                st.caption(
-                    f"Error: {e}"
-                )
-
-    # ========================================================
-    # NOTES
-    # ========================================================
-
-    current_notes = paper.get(
-        "notes",
-        ""
-    ) or ""
-
-    with st.form(
-        f"notes_form_{paper_id}"
-    ):
-
-        new_notes = st.text_area(
-            "📝 Notes",
-            value=current_notes,
-            key=f"notes_{paper_id}",
-        )
-
-        save_notes = st.form_submit_button(
-            "💾 Save Notes"
-        )
-
-    if save_notes:
-
-        try:
-
-            update_paper(
-                paper_id,
-                user_id,
-                {
-                    "notes": new_notes
-                },
-            )
-
-            st.success(
-                "Notes saved!"
-            )
-
-            st.rerun()
-
-        except Exception as e:
-
-            st.error(
-                "Unable to save notes."
-            )
-
-            st.caption(
-                f"Error: {e}"
-            )
-
-    # ========================================================
-    # DELETE
-    # ========================================================
-
-    if st.button(
-        f"🗑️ Remove Paper #{idx + 1}",
-        key=f"remove_{paper_id}",
-    ):
-
-        try:
-
-            delete_paper(
-                paper_id,
-                user_id
-            )
-
-            st.success(
-                "Paper removed."
-            )
-
-            st.rerun()
-
-        except Exception as e:
-
-            st.error(
-                "Unable to remove paper."
-            )
-
-            st.caption(
-                f"Error: {e}"
-            )
-
-
-# ============================================================
-# ADD CUSTOM PAPER
-# ============================================================
-
-st.markdown("---")
-
-st.subheader("➕ Add a Custom Paper")
-
-st.caption(
-    "Use this if you want to add a paper that was not found "
-    "through OpenAlex."
+    st.info("Your Library is empty. Search for a topic in Research and add your first paper.")
+    st.stop()
+
+# Filter papers by status and search
+statuses = ["All", "To Read", "Reading", "Done"]
+selected = st.pills("Status", statuses, default="All")
+search = st.text_input(
+    "Search library",
+    placeholder="Search by title, author, or topic",
+    label_visibility="collapsed",
 )
 
+filtered = []
+for p in papers:
+    if selected != "All" and p.get("status", "To Read") != selected:
+        continue
+    search_text = (
+        f"{p.get('title', '')} {p.get('authors', '')} {p.get('abstract', '')}"
+    ).lower()
+    if search.strip() and search.strip().lower() not in search_text:
+        continue
+    filtered.append(p)
 
-with st.form("add_paper_form"):
-
-    title = st.text_input(
-        "Title"
+st.caption(f"{len(filtered)} paper{'s' if len(filtered) != 1 else ''}")
+# Display papers
+for p in filtered:
+    pid = p["id"]
+    labels = p.get("labels") or (
+        [] if not isinstance(p.get("labels"), str) else [p.get("labels")]
     )
 
-    authors = st.text_input(
-        "Authors"
+    # Paper card
+    st.markdown('<div class="research-card">', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="research-card-title">{p.get("title", "Untitled")}</div>',
+        unsafe_allow_html=True,
     )
-
-    abstract = st.text_area(
-        "Abstract"
+    st.markdown(
+        f'<div class="meta">{p.get("authors", "Unknown")} · '
+        f'{p.get("publication_year") or "Year unknown"} · '
+        f'{p.get("citation_count", 0)} citations</div>',
+        unsafe_allow_html=True,
     )
+    st.markdown(chips(labels), unsafe_allow_html=True)
 
-    url = st.text_input(
-        "Optional URL"
+    # Abstract preview
+    abstract = p.get("abstract") or "No abstract available."
+    preview = abstract[:350] + ("…" if len(abstract) > 350 else "")
+    st.markdown(
+        f'<p class="muted" style="line-height:1.55">{preview}</p>',
+        unsafe_allow_html=True,
     )
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    source = st.selectbox(
-        "📌 Source",
-        [
-            "Manual",
-            "Google Scholar",
-            "Conference",
-            "ArXiv",
-            "Advisor",
-            "Other",
-        ],
-    )
-
-    labels = st.multiselect(
-        "🏷️ Labels",
-        label_options,
-    )
-
-    submit = st.form_submit_button(
-        "➕ Add to Reading List"
-    )
-
-
-# ============================================================
-# ADD CUSTOM PAPER TO SUPABASE
-# ============================================================
-
-if submit:
-
-    if not title.strip():
-
-        st.warning(
-            "Please enter the paper title."
+    # Action buttons
+    c1, c2, c3 = st.columns([1.2, 1.1, 1])
+    with c1:
+        options = statuses[1:]
+        current = p.get("status", "To Read")
+        status = st.selectbox(
+            "Status",
+            options,
+            index=options.index(current) if current in options else 0,
+            key=f"status_{pid}",
+            label_visibility="collapsed",
         )
-
-    elif not authors.strip():
-
-        st.warning(
-            "Please enter the authors."
-        )
-
-    elif not abstract.strip():
-
-        st.warning(
-            "Please enter the abstract."
-        )
-
-    else:
-
-        try:
-
-            add_paper(
-                user_id=user_id,
-                paper={
-                    # No OpenAlex ID because this is
-                    # a manually added paper.
-                    "openalex_id": None,
-
-                    "title": title.strip(),
-
-                    "authors": authors.strip(),
-
-                    "abstract": abstract.strip(),
-
-                    "url": (
-                        url.strip()
-                        if url.strip()
-                        else "#"
-                    ),
-
-                    "source": source,
-
-                    "labels": labels,
-
-                    "status": "To Read",
-
-                    "notes": "",
-                },
-            )
-
-            st.success(
-                "✅ Paper added to your reading list!"
-            )
-
+        if status != current:
+            update_paper(pid, user_id, {"status": status})
+            st.rerun()
+    with c2:
+        if p.get("url") and p.get("url") != "#":
+            st.link_button("View paper ↗", p["url"])
+    with c3:
+        if st.button("Delete", key=f"delete_{pid}"):
+            delete_paper(pid, user_id)
+            st.toast("Paper removed from Library")
             st.rerun()
 
-        except Exception as e:
+    # Notes expander
+    with st.expander("Notes & details"):
+        notes = st.text_area(
+            "Notes", value=p.get("notes") or "", key=f"notes_{pid}"
+        )
+        if st.button("Save notes", key=f"save_notes_{pid}"):
+            update_paper(pid, user_id, {"notes": notes})
+            st.toast("Notes saved")
+        st.markdown(
+            f"**Source:** {p.get('source', 'Unknown')}  \n"
+            f"**OpenAlex ID:** `{p.get('openalex_id') or 'Manual paper'}`"
+        )
+    st.divider()
+# Add paper manually
+with st.expander("＋ Add a paper manually"):
+    with st.form("manual_paper"):
+        title = st.text_input("Title")
+        authors = st.text_input("Authors")
+        year = st.number_input(
+            "Publication year", min_value=1800, max_value=2100, value=2026
+        )
+        url = st.text_input("Paper URL")
+        abstract = st.text_area("Abstract")
+        source = st.selectbox(
+            "Source", ["Manual", "ArXiv", "Conference", "Advisor", "Other"]
+        )
+        submitted = st.form_submit_button("Add to Library", type="primary")
 
-            st.error(
-                "Unable to add the paper."
+    if submitted:
+        if not title.strip():
+            st.warning("Title is required.")
+        else:
+            add_paper(
+                user_id,
+                {
+                    "openalex_id": None,
+                    "title": title,
+                    "authors": authors,
+                    "abstract": abstract,
+                    "url": url or "#",
+                    "source": source,
+                    "labels": [],
+                    "status": "To Read",
+                    "notes": "",
+                    "publication_year": int(year),
+                    "citation_count": 0,
+                },
             )
-
-            st.caption(
-                f"Error: {e}"
-            )
+            st.toast("Paper added to Library")
+            st.rerun()

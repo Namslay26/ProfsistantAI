@@ -5,7 +5,7 @@ from auth import login, get_user_id
 from database import get_user_papers
 from ui import apply_theme, sidebar, page_header
 
-from ai.provider import get_gemini_client, MODEL
+from ai.provider import generate_content, MODEL
 
 
 # Initialize theme and sidebar
@@ -67,7 +67,7 @@ if st.button("✨ Generate research directions", type="primary"):
     )
     with st.status("Reading your selected papers…", expanded=True) as status:
         try:
-            response=get_gemini_client().models.generate_content(model=MODEL,contents=prompt); st.session_state.generated_ideas=response.text; status.update(label="Research directions generated",state="complete")
+            response=generate_content(prompt, model=MODEL); st.session_state.generated_ideas=response.text; status.update(label="Research directions generated",state="complete")
         except Exception as e:
             status.update(label="Generation failed", state="error")
             st.error(str(e))

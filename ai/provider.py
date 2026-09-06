@@ -1,3 +1,5 @@
+import time
+
 import streamlit as st
 from google import genai
 
@@ -45,6 +47,21 @@ def _create_gemini_client(api_key):
 def get_gemini_client():
     """Return a reusable client whose transport stays open across reruns."""
     return _create_gemini_client(get_gemini_api_key())
+
+
+def generate_content(contents, model=MODEL, attempts=3):
+    """Generate content, retrying temporary Gemini capacity and rate-limit errors."""
+    for attempt in range(attempts):
+        try:
+            return get_gemini_client().models.generate_content(
+                model=model,
+                contents=contents,
+            )
+        except Exception as exc:
+            code = getattr(exc, "code", None)
+            if code not in {429, 500, 502, 503, 504} or attempt == attempts - 1:
+                raise
+            time.sleep(2**attempt)
 
 
 def has_user_key():

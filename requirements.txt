@@ -1,3 +1,4 @@
+streamlit==1.63.0
 plotly
 ics
 google-genai

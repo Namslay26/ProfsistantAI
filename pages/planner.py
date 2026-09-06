@@ -23,7 +23,6 @@ if "user" not in st.session_state:
 # Get user data
 user_id = get_user_id()
 papers = get_user_papers(user_id)
-client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 # Page header
 page_header(

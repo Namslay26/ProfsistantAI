@@ -20,7 +20,6 @@ if "user" not in st.session_state:
 # Initialize clients and constants
 user_id = get_user_id()
 supabase = get_supabase()
-gemini_client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 OPENALEX_URL = "https://api.openalex.org/works"
 
 
@@ -142,88 +141,83 @@ if st.session_state.get("search_results"):
     st.caption(f"Showing the {len(papers)} most relevant results.")
 
     for idx, paper in enumerate(papers, 1):
-        # Paper card
-        st.markdown('<div class="research-card">', unsafe_allow_html=True)
-        st.markdown(
-            f'<div class="research-card-title">{idx}. {paper["title"]}</div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f'<div class="meta">{paper["authors"]} · '
-            f'{paper["publication_year"] or "Year unknown"} · '
-            f'{paper["citation_count"]} citations</div>',
-            unsafe_allow_html=True,
-        )
+        with st.container(border=True):
+            st.markdown(
+                f'<div class="research-card-title">{idx}. {paper["title"]}</div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f'<div class="meta">{paper["authors"]} · '
+                f'{paper["publication_year"] or "Year unknown"} · '
+                f'{paper["citation_count"]} citations</div>',
+                unsafe_allow_html=True,
+            )
 
-        # Badges
-        badges = ["Open access"] if paper["is_open_access"] else []
-        badges.append("OpenAlex")
-        st.markdown(chips(badges), unsafe_allow_html=True)
+            badges = ["Open access"] if paper["is_open_access"] else []
+            badges.append("OpenAlex")
+            st.markdown(chips(badges), unsafe_allow_html=True)
 
-        # Abstract preview
-        abstract = paper["abstract"]
-        preview = abstract[:420] + ("…" if len(abstract) > 420 else "")
-        st.markdown(
-            f'<p class="muted" style="margin-top:.75rem;line-height:1.6">{preview}</p>',
-            unsafe_allow_html=True,
-        )
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # Action buttons
-        c1, c2, c3 = st.columns([1.25, 1, 1])
-        with c1:
-            if paper["openalex_id"] in saved:
-                st.success("✓ In Library")
-            elif st.button("＋ Add to Library", key=f"add_{idx}"):
-                try:
-                    add_paper(
-                        user_id,
-                        {
-                            "openalex_id": paper["openalex_id"],
-                            "title": paper["title"],
-                            "authors": paper["authors"],
-                            "abstract": paper["abstract"],
-                            "url": paper["url"],
-                            "source": "OpenAlex",
-                            "labels": [],
-                            "status": "To Read",
-                            "notes": "",
-                            "publication_year": paper["publication_year"],
-                            "citation_count": paper["citation_count"],
-                        },
-                    )
-                    st.toast("Paper added to your Library")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Could not add paper: {e}")
-
-        with c2:
-            if paper["url"] != "#":
-                st.link_button("View paper ↗", paper["url"])
-
-        with c3:
-            if paper["pdf_url"]:
-                st.link_button("Open PDF ↗", paper["pdf_url"])
-
-        # Abstract expander with AI analysis
-        with st.expander("Read abstract / get AI insight"):
-            st.markdown(paper["abstract"])
-            if st.button("✨ Summarize this paper", key=f"summary_{idx}"):
-                with st.status("Analyzing paper…", expanded=False) as status:
+            abstract = paper["abstract"]
+            preview = abstract[:420] + ("…" if len(abstract) > 420 else "")
+            st.markdown(
+                f'<p class="muted" style="margin-top:.75rem;line-height:1.6">{preview}</p>',
+                unsafe_allow_html=True,
+            )
+            c1, c2, c3 = st.columns([1.25, 1, 1])
+            with c1:
+                if paper["openalex_id"] in saved:
+                    st.success("✓ In Library")
+                elif st.button("＋ Add to Library", key=f"add_{idx}"):
                     try:
-                        prompt = (
-                            "You are helping a student understand an academic paper.\n"
-                            f"Title: {paper['title']}\n"
-                            f"Authors: {paper['authors']}\n"
-                            f"Abstract: {paper['abstract'][:3000]}\n\n"
-                            "Give: 3 bullet summary, problem, approach, contribution, "
-                            "and one possible research direction. Keep it concise."
+                        add_paper(
+                            user_id,
+                            {
+                                "openalex_id": paper["openalex_id"],
+                                "title": paper["title"],
+                                "authors": paper["authors"],
+                                "abstract": paper["abstract"],
+                                "url": paper["url"],
+                                "source": "OpenAlex",
+                                "labels": [],
+                                "status": "To Read",
+                                "notes": "",
+                                "publication_year": paper["publication_year"],
+                                "citation_count": paper["citation_count"],
+                            },
                         )
-                        response=get_gemini_client().models.generate_content(model=MODEL,contents=prompt)
-                        status.update(
-                            label="Analysis complete", state="complete"
-                        )
-                        st.markdown(response.text)
+                        st.toast("Paper added to your Library")
+                        st.rerun()
                     except Exception as e:
-                        status.update(label="Analysis failed", state="error")
-                        st.error(str(e))
+                        st.error(f"Could not add paper: {e}")
+
+            with c2:
+                if paper["url"] != "#":
+                    st.link_button("View paper ↗", paper["url"])
+
+            with c3:
+                if paper["pdf_url"]:
+                    st.link_button("Open PDF ↗", paper["pdf_url"])
+
+            with st.expander("Read abstract / get AI insight"):
+                st.markdown(paper["abstract"])
+                if st.button("✨ Summarize this paper", key=f"summary_{idx}"):
+                    with st.status("Analyzing paper…", expanded=False) as status:
+                        try:
+                            prompt = (
+                                "You are helping a student understand an academic paper.\n"
+                                f"Title: {paper['title']}\n"
+                                f"Authors: {paper['authors']}\n"
+                                f"Abstract: {paper['abstract'][:3000]}\n\n"
+                                "Give: 3 bullet summary, problem, approach, contribution, "
+                                "and one possible research direction. Keep it concise."
+                            )
+                            response = get_gemini_client().models.generate_content(
+                                model=MODEL, contents=prompt
+                            )
+                            status.update(
+                                label="Analysis complete", state="complete"
+                            )
+                            st.markdown(response.text)
+                        except Exception as e:
+                            status.update(label="Analysis failed", state="error")
+                            st.error(str(e))

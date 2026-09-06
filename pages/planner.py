@@ -8,6 +8,8 @@ from google import genai
 from auth import login, get_user_id
 from database import get_user_papers
 from ui import apply_theme, sidebar, page_header
+from ai.provider import get_gemini_client, MODEL
+
 
 # Initialize theme and sidebar
 apply_theme()
@@ -110,14 +112,7 @@ if st.button("✨ Generate plan", type="primary"):
     )
     with st.status("Building your research plan…", expanded=True) as status:
         try:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash", contents=prompt
-            )
-            text = re.sub(
-                r"^```(?:json)?\s*|\s*```$", "", response.text.strip()
-            )
-            st.session_state.generated_plan = json.loads(text)
-            status.update(label="Plan ready", state="complete")
+            response=get_gemini_client().models.generate_content(model=MODEL,contents=prompt); text=re.sub(r"^```(?:json)?\s*|\s*```$","",response.text.strip()); st.session_state.generated_plan=json.loads(text); status.update(label="Plan ready",state="complete")
         except Exception as e:
             status.update(label="Plan generation failed", state="error")
             st.error(f"Could not create plan: {e}")

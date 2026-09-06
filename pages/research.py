@@ -6,6 +6,7 @@ from google import genai
 from auth import login, get_user_id
 from database import get_supabase, add_paper
 from ui import apply_theme, sidebar, page_header, chips
+from ai.provider import get_gemini_client, MODEL
 
 # Initialize theme and sidebar
 apply_theme()
@@ -218,9 +219,7 @@ if st.session_state.get("search_results"):
                             "Give: 3 bullet summary, problem, approach, contribution, "
                             "and one possible research direction. Keep it concise."
                         )
-                        response = gemini_client.models.generate_content(
-                            model="gemini-2.5-flash", contents=prompt
-                        )
+                        response=get_gemini_client().models.generate_content(model=MODEL,contents=prompt)
                         status.update(
                             label="Analysis complete", state="complete"
                         )

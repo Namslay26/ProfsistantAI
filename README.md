@@ -55,11 +55,13 @@ cd profsistant
 ```
 pip install -r requirements.txt
 ```
-### 3. Set your API key
-Create a file: .streamlit/secrets.toml
+### 3. Configure Supabase
+Create a file: `.streamlit/secrets.toml`
 ```
-GEMINI_API_KEY = "your-gemini-api-key-here"
+SUPABASE_URL = "your-supabase-url"
+SUPABASE_API_KEY = "your-supabase-api-key"
 ```
+After you log in, Profsistant will ask you to enter and validate your own Gemini API key. It is kept only in your Streamlit session and is not saved to your Profsistant account. A `GEMINI_API_KEY` secret can optionally be configured if you choose Profsistant AI in Settings.
 ### 4. Run the app
 ```
 streamlit run Home.py

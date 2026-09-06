@@ -2,8 +2,17 @@ import streamlit as st
 
 st.set_page_config(page_title="Profsistant", page_icon="▣", layout="wide", initial_sidebar_state="expanded")
 
+from auth import login, require_gemini_key
 from ui import apply_theme
+
 apply_theme()
+
+if "user" not in st.session_state:
+    login()
+    st.stop()
+
+if not require_gemini_key():
+    st.stop()
 
 pages = [
     st.Page("pages/research.py", title="Research", icon="🔎", default=True),

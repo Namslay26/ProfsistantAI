@@ -11,7 +11,7 @@ def _session_key():
 
 
 def get_ai_mode():
-    return st.session_state.get("ai_provider_mode", "profsistant")
+    return st.session_state.get("ai_provider_mode", "byok")
 
 
 def set_ai_mode(mode):

@@ -1,6 +1,7 @@
 import streamlit as st
 
 from supabase import create_client
+from ai.provider import validate_user_key
 
 
 # ============================================================
@@ -152,6 +153,39 @@ def login():
             st.error(
                 f"Authentication failed: {e}"
             )
+
+
+def require_gemini_key():
+    """Collect and validate a user's Gemini key before opening the app."""
+    if (st.session_state.get("user_gemini_api_key") or "").strip():
+        return True
+
+    st.title("Bring your own Gemini key")
+    st.write(
+        "Add a Gemini API key to continue. Your key is kept only in this session "
+        "and is not saved to your Profsistant account."
+    )
+    st.link_button(
+        "Get a Gemini API key ↗",
+        "https://aistudio.google.com/app/apikey",
+    )
+    key = st.text_input(
+        "Gemini API key",
+        type="password",
+        placeholder="Paste your Gemini API key",
+        key="onboarding_gemini_key",
+    )
+
+    if st.button("Test and continue", type="primary"):
+        valid, message = validate_user_key(key)
+        if valid:
+            st.session_state.user_gemini_api_key = key.strip()
+            st.session_state.ai_provider_mode = "byok"
+            st.rerun()
+        else:
+            st.error(message)
+
+    return False
 
 
 # ============================================================

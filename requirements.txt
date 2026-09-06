@@ -3,3 +3,4 @@ ics
 google-genai
 pytz
 requests
+supabase

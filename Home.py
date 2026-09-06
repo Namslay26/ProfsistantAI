@@ -1,0 +1,16 @@
+import streamlit as st
+
+st.set_page_config(page_title="Profsistant", page_icon="./profai.png", layout="wide", initial_sidebar_state="expanded")
+
+from ui import apply_theme
+apply_theme()
+
+pages = [
+    st.Page("pages/research.py", title="Research", icon="🔎", default=True),
+    st.Page("pages/library.py", title="Library", icon="📚"),
+    st.Page("pages/ideas.py", title="Ideas", icon="💡"),
+    st.Page("pages/planner.py", title="Planner", icon="📅"),
+    st.Page("pages/progress.py", title="Progress", icon="📊"),
+]
+st.navigation(pages, position="sidebar").run()
+st.logo("./profai.png",size="large")
